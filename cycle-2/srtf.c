@@ -1,8 +1,8 @@
-/* Shortest Remaining Time First scheduling is dome with the help of a circular queue. 
-1) Create a Process & Queue struct 
+/* Shortest Remaining Time First scheduling is dome with the help of a circular queue.
+1) Create a Process & Queue struct
 2) Implement the basic Queue conditions
 3) Create a Gantt Chart and a ready queue
-4) Update the rq according to the arrival time 
+4) Update the rq according to the arrival time
 5) Check whether the rq is empty or there is not cp running? show idle time and continue
 6) sortByRt . If cp is null dequeue from rq: enqueue the cp to rq and dequeue from rq;
 7) decrement rt of the cp
@@ -10,8 +10,6 @@
 
 
 */
-
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -37,6 +35,7 @@ typedef struct
     Process *data[QS];
     int front;
     int rear;
+    int size;
 } Queue;
 
 // Queue functions
@@ -44,6 +43,7 @@ void initQueue(Queue *q)
 {
     q->front = -1;
     q->rear = -1;
+    q->size = 0;
 }
 
 int isEmpty(Queue *q)
@@ -73,6 +73,7 @@ void enqueue(Queue *q, Process *p)
         q->rear = (q->rear + 1) % QS;
     }
     q->data[q->rear] = p;
+    q->size++;
 }
 
 Process *dequeue(Queue *q)
@@ -94,7 +95,7 @@ Process *dequeue(Queue *q)
     {
         q->front = (q->front + 1) % QS;
     }
-
+    q->size--;
     return p;
 }
 
@@ -107,25 +108,13 @@ Process *peek(Queue *q)
     return q->data[q->front];
 }
 
-// Count elements in queue
-int queueCount(Queue *q)
-{
-    if (isEmpty(q))
-        return 0;
-
-    if (q->rear >= q->front)
-        return (q->rear - q->front + 1);
-    else
-        return (QS - q->front + q->rear + 1);
-}
-
 // Sort the queue by rt time (bubble sort)
 void sortByRt(Queue *q)
 {
     if (isEmpty(q))
         return;
 
-    int count = queueCount(q);
+    int count = q->size;
     int i, j;
 
     for (i = 0; i < count; i++)
@@ -165,9 +154,9 @@ int main()
     int n, i, current_time = 0, completed = 0;
     float total_wt = 0, total_tt = 0;
     Queue rq;           // Ready Queue
-    Gantt chart[100]; // For Gantt chart
+    Gantt chart[100];   // For Gantt chart
     Process *cp = NULL; // Current Process
-    int ci = 0;       // Chart Index
+    int ci = 0;         // Chart Index
 
     // Initialize queue
     initQueue(&rq);
