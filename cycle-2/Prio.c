@@ -24,6 +24,7 @@ typedef struct
     Process *data[QS];
     int front;
     int rear;
+    int size;
 } Queue;
 
 // Queue functions
@@ -31,6 +32,7 @@ void initQueue(Queue *q)
 {
     q->front = -1;
     q->rear = -1;
+    q->size = 0;
 }
 
 int isEmpty(Queue *q)
@@ -60,6 +62,7 @@ void enqueue(Queue *q, Process *p)
         q->rear = (q->rear + 1) % QS;
     }
     q->data[q->rear] = p;
+    q->size++;
 }
 
 Process *dequeue(Queue *q)
@@ -81,7 +84,7 @@ Process *dequeue(Queue *q)
     {
         q->front = (q->front + 1) % QS;
     }
-
+    q->size--;
     return p;
 }
 
@@ -94,25 +97,13 @@ Process *peek(Queue *q)
     return q->data[q->front];
 }
 
-// Count elements in queue
-int queueCount(Queue *q)
-{
-    if (isEmpty(q))
-        return 0;
-
-    if (q->rear >= q->front)
-        return (q->rear - q->front + 1);
-    else
-        return (QS - q->front + q->rear + 1);
-}
-
 // Sort the queue by priority (bubble sort)
 void sortByPriority(Queue *q)
 {
     if (isEmpty(q))
         return;
 
-    int count = queueCount(q);
+    int count = q->size;
     int i, j;
 
     for (i = 0; i < count; i++)
