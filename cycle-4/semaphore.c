@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
-#include <unistd.h>
 
 #define BUFFER_SIZE 5
 #define MAX_ITEMS 20
@@ -34,7 +34,7 @@ void *producer(void *arg) {
 
 void *consumer(void *arg) {
     int item;
-    while (1) {
+    while (item < MAX_ITEMS) {
         sem_wait(&full);
         sem_wait(&mutex);
         

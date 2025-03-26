@@ -149,26 +149,16 @@ int main() {
     
     printf("Enter the number of requests: ");
     scanf("%d", &n);
-    if (n > MAX_REQUESTS) {
-        printf("Exceeds maximum requests (%d)\n", MAX_REQUESTS);
-        return 1;
-    }
     
     printf("Enter the request queue:\n");
     for (int i = 0; i < n; i++) {
         scanf("%d", &requests[i]);
-        if (requests[i] >= disk_size || requests[i] < 0) {
-            printf("Request %d out of disk range (0-%d)\n", requests[i], disk_size - 1);
-            return 1;
-        }
+
     }
     
     printf("Enter the initial head position: ");
     scanf("%d", &head);
-    if (head >= disk_size || head < 0) {
-        printf("Head position out of disk range (0-%d)\n", disk_size - 1);
-        return 1;
-    }
+   
     
     printf("Enter direction for SCAN (0 for left, 1 for right): ");
     scanf("%d", &direction);
