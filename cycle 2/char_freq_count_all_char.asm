@@ -34,31 +34,31 @@ _start:
     dec eax		;remove the \n character 
     mov byte [str1 + eax], 0	; insert \0 character to the end of the string 
     
-	mov edi , str1
+	mov edi , str1  ; main pointer 
 
 	
 	
 .loop1: 
-	mov esi , str1 
+	mov esi , str1  ;  reset index pointer 
 	mov dl , [edi] 
-	mov ecx , 0 
+	mov ecx , 0 	; initialize/ reset the count with 0 
 	
 	
-	cmp dl , 0 
+	cmp dl , 0 	; read the complete string 
 	je .exit 
 	
 .loop2: 
-	mov al , [esi] 
-	cmp al ,  0 
+	mov al , [esi]  	
+	cmp al ,  0 		; check for null terminator 
 	je .print_result 
 	
-	cmp al , dl 
-	jne .skip
-	inc ecx
+	cmp al , dl 	; check both the pointers
+	jne .skip	; skip to the next character 
+	inc ecx		; increment counter
 
 	
 .skip: 
-	inc esi
+	inc esi		
 	jmp .loop2 
 	
 	
@@ -66,27 +66,32 @@ _start:
 	
 .print_result: 
 	
-	add cl , '0' 
-	mov [count] , cl 
+	add cl , '0' 		; convert the count value to ASCII 
 	
+	mov [count] , cl 	; store the value in the count variable 
+	
+	; print the current char
 	mov eax , 4 
 	mov ebx , 1 
 	mov ecx ,edi
 	mov edx , 1 
 	int 0x80 
 	
+	; print colon
 	mov eax , 4 
 	mov ebx , 1 
 	mov ecx ,colon
 	mov edx , 3
 	int 0x80 
 	
+	;print count 
 	mov eax , 4 
 	mov ebx ,1 
 	mov ecx , count
 	mov edx , 1
 	int 0x80 
 	
+	; print newline 
 	mov eax , 4 
 	mov ebx ,1 
 	mov ecx , newline
@@ -94,12 +99,12 @@ _start:
 	int 0x80 
 	
 	
-	
+	; repeat the same process for every char in the string 
 	inc edi
 	jmp .loop1 
 	
 .exit: 
-
+	; terminate 
 	mov eax , 1
 	mov ebx ,0 
 	int 0x80 
