@@ -1,2 +1,3 @@
 *.o 
 string_equality
+palindrome_case_sensitive
