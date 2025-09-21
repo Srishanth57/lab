@@ -1,4 +1,4 @@
-CREATE DATABASE student;
+CREATE DATABASE IF NOT EXISTS student;
 USE student;
 
 -- Employee Table
@@ -159,5 +159,20 @@ select r.resident_id , r.resident_name , count(distinct c.companions_id) as no_o
 -- Question 2 
 select r.* , count(distinct c.companions_id ) as no_of_companions from residents r inner join companions c on c.resident_id = r.resident_id inner join bookings b on b.resident_id = r.resident_id where b.booking_date > '2024-05-01' group by resident_id ;
 
+-- Question 3 
+SELECT DISTINCT r.* 
+FROM residents r 
+JOIN bookings b ON b.resident_id = r.resident_id 
+JOIN rooms rm ON rm.room_id = b.room_id 
+WHERE rm.room_type = 'A/C' 
+  AND r.resident_id IN (
+    SELECT b2.resident_id  
+    FROM rooms rm2 
+    JOIN bookings b2 ON rm2.room_id = b2.room_id 
+    WHERE rm2.room_type = 'A/C' 
+    GROUP BY b2.resident_id  
+    HAVING COUNT(DISTINCT b2.booking_id) >= 2 
+       AND COUNT(*) > 2
+  );
     
 -- drop database student; 
