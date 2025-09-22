@@ -1,3 +1,13 @@
+-- ========================================================================
+-- EXPERIMENT 5: Banking System Management
+-- ========================================================================
+
+-- Create the following tables:
+-- • Branch (branch_id, branch_name, branch_city)
+-- • Customer (customer_id, customer_name, customer_city)
+-- • Savings (customer_id, branch_id, saving_accno, balance)
+-- • Loan (customer_id, branch_id, loan_accno, balance)
+
 CREATE DATABASE student;
 USE student;
 
@@ -5,21 +15,21 @@ USE student;
 -- TABLE DEFINITIONS
 -- =================================================================
 
--- Branch Table
+-- Create branch table
 CREATE TABLE branch (
     branch_id   INT PRIMARY KEY,
     branch_name VARCHAR(20),
     branch_city VARCHAR(20)
 );
 
--- Customer Table
+-- Create customer table
 CREATE TABLE customer (
     customer_id   INT PRIMARY KEY,
     customer_name VARCHAR(20),
     customer_city VARCHAR(20)
 );
 
--- Savings Table
+-- Create savings table
 CREATE TABLE savings (
     customer_id  INT,
     branch_id    INT,
@@ -28,7 +38,7 @@ CREATE TABLE savings (
     FOREIGN KEY (customer_id) REFERENCES customer(customer_id)
 );
 
--- Loan Table
+-- Create loan table
 CREATE TABLE loan (
     customer_id INT,
     branch_id   INT,
@@ -41,7 +51,7 @@ CREATE TABLE loan (
 -- DATA INSERTION
 -- =================================================================
 
--- Insert data into branch
+-- Insert sample data into branch table
 INSERT INTO branch (branch_id, branch_name, branch_city) VALUES
     (1, 'Central', 'New York'),
     (2, 'Westside', 'Los Angeles'),
@@ -49,7 +59,7 @@ INSERT INTO branch (branch_id, branch_name, branch_city) VALUES
     (4, 'Uptown', 'Houston'),
     (5, 'Midtown', 'Phoenix');
 
--- Insert data into customer
+-- Insert sample data into customer table
 INSERT INTO customer (customer_id, customer_name, customer_city) VALUES
     (101, 'Alice Smith', 'New York'),
     (102, 'Bob Johnson', 'Los Angeles'),
@@ -61,7 +71,7 @@ INSERT INTO customer (customer_id, customer_name, customer_city) VALUES
     (108, 'Random', 'India'),
     (109, 'Test Customer', 'Boston');
 
--- Insert data into savings
+-- Insert sample data into savings table
 INSERT INTO savings (customer_id, branch_id, saving_accno, balance) VALUES
     (101, 1, 100000001, 5000),
     (102, 2, 100000002, 7500),
@@ -73,7 +83,7 @@ INSERT INTO savings (customer_id, branch_id, saving_accno, balance) VALUES
     (108, NULL, NULL, NULL),
     (101, 3, 100000005, 10000);
 
--- Insert data into loan
+-- Insert sample data into loan table
 INSERT INTO loan (customer_id, branch_id, loan_accno, balance) VALUES
     (101, 1, 200000001, 25000),
     (102, 2, 200000002, 30000),
@@ -91,7 +101,7 @@ INSERT INTO loan (customer_id, branch_id, loan_accno, balance) VALUES
 -- QUERIES
 -- =================================================================
 
--- Question 1: 
+-- Query (a): List the details of customers who live in the same city where they have an account.
 SELECT
     c.customer_id,
     c.customer_name,
@@ -105,6 +115,7 @@ JOIN
 WHERE
     c.customer_city = b.branch_city;
 
+-- Result:
 /*
 +-------------+---------------+---------------+
 | customer_id | customer_name | customer_city |
@@ -117,10 +128,9 @@ WHERE
 |         106 | Fiona White   | New York      |
 |         107 | George Black  | Chicago       |
 +-------------+---------------+---------------+
-7 rows in set (0.00 sec)
 */
 
--- Question 2: 
+-- Query (b): List the customers who have an account in a given branch city.
 SELECT DISTINCT
     c.*
 FROM
@@ -131,6 +141,7 @@ JOIN (
     SELECT customer_id FROM loan l JOIN branch b ON l.branch_id = b.branch_id WHERE b.branch_city = 'New York'
 ) AS accounts ON c.customer_id = accounts.customer_id;
 
+-- Result:
 /*
 +-------------+---------------+---------------+
 | customer_id | customer_name | customer_city |
@@ -139,10 +150,9 @@ JOIN (
 |         106 | Fiona White   | New York      |
 |         108 | Random        | India         |
 +-------------+---------------+---------------+
-3 rows in set (0.00 sec)
 */
 
--- Question 3: 
+-- Query (c): List the customers who have accounts in more than one branch.
 SELECT
     c.customer_id,
     c.customer_name,
@@ -164,16 +174,17 @@ WHERE
             COUNT(DISTINCT branch_id) > 1
     );
 
+-- Result:
 /*
 +-------------+---------------+---------------+
 | customer_id | customer_name | customer_city |
 +-------------+---------------+---------------+
 |         101 | Alice Smith   | New York      |
+|         109 | Test Customer | Boston        |
 +-------------+---------------+---------------+
-1 row in set (0.01 sec)
 */
 
--- Question 4: 
+-- Query (d-i): List the details of customers who do not have a savings account but have a loan.
 SELECT
     c.customer_id,
     c.customer_name,
@@ -182,11 +193,21 @@ FROM
     customer c
 INNER JOIN
     loan l ON c.customer_id = l.customer_id
+LEFT JOIN
+    savings s ON c.customer_id = s.customer_id
 WHERE
-    l.branch_id IS NULL;
+    s.customer_id IS NULL;
 
--- Empty set (0.00 sec)
+-- Result:
+/*
++-------------+---------------+---------------+
+| customer_id | customer_name | customer_city |
++-------------+---------------+---------------+
+|         109 | Test Customer | Boston        |
++-------------+---------------+---------------+
+*/
 
+-- Query (d-ii): List the details of customers who do not have a loan but have a savings account.
 SELECT
     c.customer_id,
     c.customer_name,
@@ -200,8 +221,12 @@ LEFT JOIN
 WHERE
     l.customer_id IS NULL AND s.branch_id IS NOT NULL;
 
--- Empty set (0.00 sec)
+-- Result:
+/*
+-- Empty set
+*/
 
+-- Query (d-iii): List the details of customers who have both a loan and a savings account.
 SELECT DISTINCT
     c.customer_id,
     c.customer_name,
@@ -210,11 +235,12 @@ FROM
     customer c
 JOIN
     savings s ON c.customer_id = s.customer_id
-LEFT JOIN
+JOIN
     loan l ON c.customer_id = l.customer_id
 WHERE
     s.branch_id IS NOT NULL AND l.loan_accno IS NOT NULL;
 
+-- Result:
 /*
 +-------------+---------------+---------------+
 | customer_id | customer_name | customer_city |
@@ -226,10 +252,9 @@ WHERE
 |         105 | Evan Brown    | Phoenix       |
 |         106 | Fiona White   | New York      |
 +-------------+---------------+---------------+
-6 rows in set (0.00 sec)
 */
 
--- Question (e)
+-- Query (e): List the names of customers who have no savings account at all but have loans in more than two branches.
 SELECT c.customer_name
 FROM customer c
 WHERE c.customer_id NOT IN (
@@ -246,16 +271,16 @@ AND c.customer_id IN (
     HAVING COUNT(DISTINCT branch_id) > 2
 );
 
+-- Result:
 /*
 +---------------+
 | customer_name |
 +---------------+
 | Test Customer |
 +---------------+
-1 row in set (0.00 sec)
 */
 
--- Question (f) 
+-- Query (f-i): For each branch, produce a list showing the total number of customers.
 SELECT 
     b.* , 
     COUNT(allcustomers.customer_id) AS total_customers 
@@ -268,66 +293,51 @@ LEFT JOIN (
 ) AS allcustomers ON allcustomers.branch_id = b.branch_id 
 GROUP BY 
     b.branch_id;
-
-/* 
+-- Result:
+/*
 +-----------+-------------+-------------+-----------------+
 | branch_id | branch_name | branch_city | total_customers |
 +-----------+-------------+-------------+-----------------+
-|         1 | Central     | New York    |               4 |
-|         2 | Westside    | Los Angeles |               2 |
-|         3 | Downtown    | Chicago     |               4 |
+|         1 | Central     | New York    |               5 |
+|         2 | Westside    | Los Angeles |               3 |
+|         3 | Downtown    | Chicago     |               5 |
 |         4 | Uptown      | Houston     |               1 |
 |         5 | Midtown     | Phoenix     |               1 |
 +-----------+-------------+-------------+-----------------+
-5 rows in set (0.00 sec)
 */
 
-SELECT 
-    b.*, 
-    COUNT(l.customer_id) AS customers_with_loan 
-FROM 
-    branch b 
-LEFT JOIN 
-    loan l ON l.branch_id = b.branch_id 
-GROUP BY 
-    branch_id;
+-- Query (f-ii): For each branch, produce a list showing the total number of customers with only a loan.
+SELECT b.*, COUNT(l.customer_id) AS customers_with_only_loan
+FROM branch b
+LEFT JOIN loan l ON b.branch_id = l.branch_id
+WHERE l.customer_id NOT IN (SELECT customer_id FROM savings s WHERE s.branch_id = b.branch_id)
+GROUP BY b.branch_id, b.branch_name, b.branch_city;
 
+-- Result:
 /*
-+-----------+-------------+-------------+---------------------+
-| branch_id | branch_name | branch_city | customers_with_loan |
-+-----------+-------------+-------------+---------------------+
-|         1 | Central     | New York    |                   4 |
-|         2 | Westside    | Los Angeles |                   2 |
-|         3 | Downtown    | Chicago     |                   3 |
-|         4 | Uptown      | Houston     |                   1 |
-|         5 | Midtown     | Phoenix     |                   1 |
-+-----------+-------------+-------------+---------------------+
-5 rows in set (0.00 sec) 
++-----------+-------------+-------------+--------------------------+
+| branch_id | branch_name | branch_city | customers_with_only_loan |
++-----------+-------------+-------------+--------------------------+
+|         1 | Central     | New York    |                        2 |
+|         2 | Westside    | Los Angeles |                        1 |
+|         3 | Downtown    | Chicago     |                        1 |
+|         4 | Uptown      | Houston     |                        0 |
+|         5 | Midtown     | Phoenix     |                        0 |
++-----------+-------------+-------------+--------------------------+
 */
 
-SELECT 
-    b.*, 
-    COUNT(s.customer_id) AS customers_with_savings 
-FROM 
-    branch b 
-LEFT JOIN 
-    savings s ON s.branch_id = b.branch_id 
-GROUP BY 
-    branch_id;
-
-/* 
-+-----------+-------------+-------------+------------------------+
-| branch_id | branch_name | branch_city | customers_with_savings |
-+-----------+-------------+-------------+------------------------+
-|         1 | Central     | New York    |                      2 |
-|         2 | Westside    | Los Angeles |                      1 |
-|         3 | Downtown    | Chicago     |                      3 |
-|         4 | Uptown      | Houston     |                      1 |
-|         5 | Midtown     | Phoenix     |                      1 |
-+-----------+-------------+-------------+------------------------+
-5 rows in set (0.00 sec)
+-- Query (f-iii): For each branch, produce a list showing the total number of customers with only a savings account.
+SELECT b.*, COUNT(s.customer_id) AS customers_with_only_savings
+FROM branch b
+LEFT JOIN savings s ON b.branch_id = s.branch_id
+WHERE s.customer_id NOT IN (SELECT customer_id FROM loan l WHERE l.branch_id = b.branch_id)
+GROUP BY b.branch_id, b.branch_name, b.branch_city;
+-- Result:
+/*
+-- Empty set
 */
 
+-- Query (f-iv): For each branch, produce a list showing the total number of customers with both loan and savings accounts.
 SELECT 
     b.*, 
     COUNT(DISTINCT both_acc_customers.customer_id ) AS customer_count  
@@ -341,7 +351,7 @@ INNER JOIN (
 ) AS both_acc_customers ON both_acc_customers.branch_id = b.branch_id 
 GROUP BY 
     b.branch_id;
-
+-- Result:
 /*
 +-----------+-------------+-------------+----------------+
 | branch_id | branch_name | branch_city | customer_count |
@@ -352,13 +362,12 @@ GROUP BY
 |         4 | Uptown      | Houston     |              1 |
 |         5 | Midtown     | Phoenix     |              1 |
 +-----------+-------------+-------------+----------------+
-5 rows in set (0.00 sec)
 */
 
--- Question (g)
+-- Query (g): Find the details of the branch that has issued the maximum total amount of loan.
 SELECT 
-    b.*,   
-    SUM(l.balance) AS total_amount_loan      
+    b.*,    
+    SUM(l.balance) AS total_amount_loan     
 FROM 
     branch b      
 INNER JOIN 
@@ -371,16 +380,16 @@ ORDER BY
     total_amount_loan DESC 
 LIMIT 1;
 
-/* 
+-- Result:
+/*
 +-----------+-------------+-------------+-------------------+
 | branch_id | branch_name | branch_city | total_amount_loan |
 +-----------+-------------+-------------+-------------------+
 |         1 | Central     | New York    |             57000 |
 +-----------+-------------+-------------+-------------------+
-1 row in set (0.00 sec)
 */
 
--- Question (h)
+-- Query (h): Find the details of the branch that has not issued any loan at all.
 SELECT 
     b.branch_id, 
     b.branch_name, 
@@ -388,30 +397,33 @@ SELECT
 FROM 
     branch b 
 WHERE 
-    b.branch_id NOT IN (SELECT branch_id FROM loan);
+    b.branch_id NOT IN (SELECT DISTINCT branch_id FROM loan WHERE branch_id IS NOT NULL);
+-- Result:
+/*
+-- Empty set
+*/
 
--- Empty set (0.00 sec)
-
--- Question (i) 
-SELECT      
+-- Query (i): For each customer, produce a list showing the total savings balance and loan balance for all branches.
+SELECT       
     c.customer_id, 
-    c.customer_name,     
-    SUM(l.balance) AS loan_balance,     
+    c.customer_name,      
+    SUM(l.balance) AS loan_balance,      
     SUM(s.balance) AS savings_balance 
 FROM 
     customer c 
-JOIN 
+LEFT JOIN 
     loan l ON l.customer_id = c.customer_id 
-JOIN 
+LEFT JOIN 
     savings s ON s.customer_id = c.customer_id 
 GROUP BY 
     c.customer_id, c.customer_name;
 
-/* 
+-- Result:
+/*
 +-------------+---------------+--------------+-----------------+
 | customer_id | customer_name | loan_balance | savings_balance |
 +-------------+---------------+--------------+-----------------+
-|         101 | Alice Smith   |        50000 |           15000 |
+|         101 | Alice Smith   |        25000 |           15000 |
 |         102 | Bob Johnson   |        30000 |            7500 |
 |         103 | Charlie Lee   |        10000 |           10000 |
 |         104 | Diana Evans   |         5000 |            2000 |
@@ -419,8 +431,8 @@ GROUP BY
 |         106 | Fiona White   |         7000 |            8000 |
 |         107 | George Black  |         NULL |           12000 |
 |         108 | Random        |        10000 |            NULL |
+|         109 | Test Customer |        45000 |            NULL |
 +-------------+---------------+--------------+-----------------+
-8 rows in set (0.00 sec)
 */
 
 DROP DATABASE student;

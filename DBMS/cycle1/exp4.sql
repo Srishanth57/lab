@@ -1,5 +1,13 @@
 
--- Create and use database
+-- ========================================================================
+-- EXPERIMENT 4: Library Book Issue Management System
+-- ========================================================================
+
+-- Create the following tables:
+-- • Book (accession no, title, publisher, year, date of purchase, status)
+-- • Member (member id, name, number of books issued, max limit)
+-- • Books Issue (accession no, member id, date of issue)
+
 CREATE DATABASE student; 
 USE student; 
 
@@ -64,43 +72,41 @@ INSERT INTO books_issue VALUES
     (1003, 204, '2025-08-09'),
     (1006, 205, '2025-08-10');
 
--- Query (a): List books that are due (issued more than 15 days ago)
+-- Query (a): List all books that are due from students. A book is considered due if it was issued more than 15 days ago and has not yet been returned
 SELECT b.title, bi.date_of_issue 
 FROM book b 
 JOIN books_issue bi ON b.accession_no = bi.accession_no 
 WHERE bi.date_of_issue < DATE_SUB(CURDATE(), INTERVAL 15 DAY);
-/*
-Result:
-+-------------------+---------------+
-| title             | date_of_issue |
-+-------------------+---------------+
-| C++ Primer        | 2025-08-05    |
-| Java Basics       | 2025-08-01    |
-| Python Crash      | 2025-08-09    |
-| Python Crash      | 2025-07-22    |
-| DBMS Concepts     | 2025-07-20    |
-| Operating Systems | 2025-08-11    |
-| Discrete Math     | 2025-08-10    |
-| Discrete Math     | 2025-08-12    |
-| AI Basics         | 2025-08-08    |
-| Networking        | 2025-08-13    |
-+-------------------+---------------+
-*/
+-- Result:
+-- +-------------------+---------------+
+-- | title             | date_of_issue |
+-- +-------------------+---------------+
+-- | C++ Primer        | 2025-08-05    |
+-- | Java Basics       | 2025-08-01    |
+-- | Python Crash      | 2025-08-09    |
+-- | Python Crash      | 2025-07-22    |
+-- | DBMS Concepts     | 2025-07-20    |
+-- | Operating Systems | 2025-08-11    |
+-- | Discrete Math     | 2025-08-10    |
+-- | Discrete Math     | 2025-08-12    |
+-- | AI Basics         | 2025-08-08    |
+-- | Networking        | 2025-08-13    |
+-- +-------------------+---------------+
 
--- Query (b): Members who cannot be issued any more books
+-- Query (b): List all members who cannot be issued any more books (i.e., their number of books issued is equal to max limit)
 SELECT * 
 FROM member 
 WHERE number_of_books_issued = max_limit;
-/*
-Result:
-+-----------+---------------+------------------------+-----------+
-| member_id | name          | number_of_books_issued | max_limit |
-+-----------+---------------+------------------------+-----------+
-|       201 | Ananya Sharma |                      3 |         3 |
-+-----------+---------------+------------------------+-----------+
-*/
+-- Result:
+-- +-----------+---------------+------------------------+-----------+
+-- | member_id | name          | number_of_books_issued | max_limit |
+-- +-----------+---------------+------------------------+-----------+
+-- |       201 | Ananya Sharma |                      3 |         3 |
+-- +-----------+---------------+------------------------+-----------+
 
--- Query (c): Book issued to maximum and minimum number of members
+-- Query (c): List the details of:
+-- • the book that has been issued to the maximum number of members, and
+-- • the book that has been issued to the least number of members
 (SELECT b.accession_no, b.title, COUNT(DISTINCT bi.member_id) AS max_min_members 
  FROM book b 
  JOIN books_issue bi ON b.accession_no = bi.accession_no 
@@ -114,17 +120,17 @@ UNION
  GROUP BY b.accession_no, b.title
  ORDER BY max_min_members ASC 
  LIMIT 1);
-/*
-Result:
-+--------------+--------------+-----------------+
-| accession_no | title        | max_min_members |
-+--------------+--------------+-----------------+
-|         1003 | Python Crash |               2 |
-|         1001 | C++ Primer   |               1 |
-+--------------+--------------+-----------------+
-*/
+-- Result:
+-- +--------------+--------------+-----------------+
+-- | accession_no | title        | max_min_members |
+-- +--------------+--------------+-----------------+
+-- |         1003 | Python Crash |               2 |
+-- |         1001 | C++ Primer   |               1 |
+-- +--------------+--------------+-----------------+
 
--- Query (d): Books issued to every member and books not issued to any member
+-- Query (d): List the details of:
+-- • the book that has been issued to every member, and
+-- • the book that has not yet been issued to any member
 -- Books issued to every member
 SELECT b.accession_no, b.title, b.status, COUNT(DISTINCT bi.member_id) AS total_members_count
 FROM book b
@@ -139,16 +145,13 @@ UNION
 SELECT b.accession_no, b.title, b.status, 0 AS total_members_count
 FROM book b
 WHERE b.status = 'Not Issued';
-/*
-Result:
-+--------------+-----------------+------------+---------------------+
-| accession_no | title           | status     | total_members_count |
-+--------------+-----------------+------------+---------------------+
-|         1009 | System Software | Not Issued |                   0 |
-+--------------+-----------------+------------+---------------------+
-*/
+-- Result:
+-- +--------------+-----------------+------------+---------------------+
+-- | accession_no | title           | status     | total_members_count |
+-- +--------------+-----------------+------------+---------------------+
+-- |         1009 | System Software | Not Issued |                   0 |
+-- +--------------+-----------------+------------+---------------------+
 
--- Drop database
 DROP DATABASE student;
 
 

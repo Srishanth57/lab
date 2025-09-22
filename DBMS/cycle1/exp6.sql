@@ -151,28 +151,145 @@ INSERT INTO food_items (food_name, type, price) VALUES
 INSERT INTO food_orders (room_id, resident_id, food_id) VALUES
     (1, 1, 2), (1, 1, 4), (2, 1, 1), (3, 2, 2), (3, 2, 3), (6, 3, 1), (7, 3, 6), (8, 4, 2), (8, 4, 5), (4, 5, 1),
     (4, 5, 7), (5, 6, 8), (5, 6, 9), (9, 7, 10), (10, 8, 11), (11, 9, 12), (12, 10, 13), (13, 11, 14), (14, 12, 15), (15, 13, 16);
-    
- 
--- Question 1 
-select r.resident_id , r.resident_name , count(distinct c.companions_id) as no_of_companions from residents r inner join companions c on c.resident_id  = r.resident_id inner join bookings b on b.resident_id = r.resident_id group by r.resident_id having no_of_companions  > 3;
 
--- Question 2 
-select r.* , count(distinct c.companions_id ) as no_of_companions from residents r inner join companions c on c.resident_id = r.resident_id inner join bookings b on b.resident_id = r.resident_id where b.booking_date > '2024-05-01' group by resident_id ;
+/*
+Question 6(a): Print the details of the residents who have more than three companions in a single booking.
+*/
+SELECT r.resident_id, r.name, COUNT(DISTINCT c.companions_id) AS no_of_companions
+FROM residents r
+INNER JOIN companions c ON c.resident_id = r.resident_id
+INNER JOIN bookings b ON b.resident_id = r.resident_id
+GROUP BY r.resident_id
+HAVING no_of_companions > 3;
 
--- Question 3 
-SELECT DISTINCT r.* 
-FROM residents r 
-JOIN bookings b ON b.resident_id = r.resident_id 
-JOIN rooms rm ON rm.room_id = b.room_id 
-WHERE rm.room_type = 'A/C' 
+/*
+Result:
++-------------+-------------+------------------+
+| resident_id | name        | no_of_companions |
++-------------+-------------+------------------+
+|      1      | Arjun Reddy |        4         |
++-------------+-------------+------------------+
+*/
+
+
+
+/*
+Question 6(b): Print the details of the residents along with the number of companions for bookings after '2024-05-01'.
+*/
+SELECT r.*, COUNT(DISTINCT c.companions_id) AS no_of_companions
+FROM residents r
+INNER JOIN companions c ON c.resident_id = r.resident_id
+INNER JOIN bookings b ON b.resident_id = r.resident_id
+WHERE b.booking_date > '2024-05-01'
+GROUP BY r.resident_id;
+
+/*
+Result:
++-------------+------------------+---------------------------+---------------+--------+-----+---------------+--------------------+------------------+
+| resident_id | name             | address                   | aadhar_number | gender | age | mobile_number | email_id           | no_of_companions |
++-------------+------------------+---------------------------+---------------+--------+-----+---------------+--------------------+------------------+
+|      1      | Arjun Reddy      | 12 Gandhi Street, Chennai | 111222333444  | Male   | 32  | 9988776655    | arjun@gmail.com    |        4         |
+|      3      | Vikram Singh     | 78 Mall Road, Delhi       | 333444555666  | Male   | 35  | 7766554433    | vikram@outlook.com|        3         |
+|      5      | Ravi Kumar       | 56 Beach Road, Goa        | 555666777888  | Male   | 27  | 5544332211    | ravi@hotmail.com   |        1         |
+|      6      | Meera Shah       | 89 Hill Station, Pune     | 666777888999  | Female | 25  | 4433221100    | meera@gmail.com    |        1         |
+|      8      | Priyanka Das     | 67 Lake View, Kolkata     | 888999000111  | Female | 31  | 2211009988    | priyanka@gmail.com |        1         |
+|     12      | Deepika Padukone | 78 Studio Lane, Mumbai    | 222333444556  | Female | 34  | 7788665544    | deepika@films.com  |        1         |
++-------------+------------------+---------------------------+---------------+--------+-----+---------------+--------------------+------------------+
+*/
+
+
+
+/*
+Question 6(c): Print the details of the residents who reserved more than two AC rooms in at least two different bookings.
+*/
+SELECT DISTINCT r.*
+FROM residents r
+JOIN bookings b ON b.resident_id = r.resident_id
+JOIN rooms rm ON rm.room_id = b.room_id
+WHERE rm.room_type = 'A/C'
   AND r.resident_id IN (
-    SELECT b2.resident_id  
-    FROM rooms rm2 
-    JOIN bookings b2 ON rm2.room_id = b2.room_id 
-    WHERE rm2.room_type = 'A/C' 
-    GROUP BY b2.resident_id  
-    HAVING COUNT(DISTINCT b2.booking_id) >= 2 
+    SELECT b2.resident_id
+    FROM rooms rm2
+    JOIN bookings b2 ON rm2.room_id = b2.room_id
+    WHERE rm2.room_type = 'A/C'
+    GROUP BY b2.resident_id
+    HAVING COUNT(DISTINCT b2.booking_id) >= 2
        AND COUNT(*) > 2
   );
-    
--- drop database student; 
+
+/*
+Result:
+Empty set (no residents matched)
+*/
+
+
+
+/*
+Question 6(d): Print the details of the food item ordered by the maximum number of residents and the food item ordered by the minimum number of residents.
+*/
+
+/* Most ordered food item: */
+SELECT fi.*, COUNT(DISTINCT fo.resident_id) AS resident_count
+FROM food_items fi
+INNER JOIN food_orders fo ON fo.food_id = fi.food_id
+GROUP BY fi.food_id, fi.food_name, fi.type, fi.price
+ORDER BY resident_count DESC
+LIMIT 1;
+
+/*
+Result (maximum):
++---------+-------------------+------------+--------+----------------+
+| food_id | food_name         | type       | price  | resident_count |
++---------+-------------------+------------+--------+----------------+
+|    1    | Vegetable Biryani | Vegetarian | 250.00 |       3        |
++---------+-------------------+------------+--------+----------------+
+*/
+
+/* Least ordered food item: */
+SELECT fi.*, COUNT(DISTINCT fo.resident_id) AS resident_count
+FROM food_items fi
+INNER JOIN food_orders fo ON fo.food_id = fi.food_id
+GROUP BY fi.food_id, fi.food_name, fi.type, fi.price
+ORDER BY resident_count ASC
+LIMIT 1;
+
+/*
+Result (minimum):
++---------+-----------+----------------+--------+----------------+
+| food_id | food_name | type           | price  | resident_count |
++---------+-----------+----------------+--------+----------------+
+|   16    | Fish Fry  | Non-Vegetarian | 280.00 |       1        |
++---------+-----------+----------------+--------+----------------+
+*/
+
+
+
+/*
+Question 6(e): Print the details of food items in non-decreasing order of preference in a specific period.
+Preference = number of orders for item - (price / 1000)
+*/
+SELECT fi.*, COUNT(fo.order_id) AS total_orders, 
+       (COUNT(fo.order_id) - (fi.price / 1000)) AS preference_score
+FROM food_items fi
+JOIN food_orders fo ON fo.food_id = fi.food_id
+GROUP BY fo.order_id
+ORDER BY preference_score DESC;
+
+/*
+Sample Result:
++---------+-----------------------+----------------+--------+--------------+------------------+
+| food_id | food_name             | type           | price  | total_orders | preference_score |
++---------+-----------------------+----------------+--------+--------------+------------------+
+|    9    | Curd Rice             | Vegetarian     |  80.00 |      1       |      0.92        |
+|    5    | Dal Tadka             | Vegetarian     | 120.00 |      1       |      0.88        |
+|   13    | Aloo Gobi             | Vegetarian     | 140.00 |      1       |      0.86        |
+|   ...   | ...                   | ...            |  ...   |    ...       |      ...         |
++---------+-----------------------+----------------+--------+--------------+------------------+
+*/
+
+
+
+
+DROP DATABASE student;
+
+
