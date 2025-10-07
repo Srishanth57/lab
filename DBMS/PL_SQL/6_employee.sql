@@ -23,7 +23,7 @@ BEGIN
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET finished = TRUE;
 
     -- Create temporary result table to store pension calculations
-    CREATE TABLE pensionResult (
+    CREATE TABLE  pensionResult (
         employeeId INT PRIMARY KEY,
         employeeName VARCHAR(30),
         yearOfService INT,
@@ -58,4 +58,27 @@ BEGIN
 END $$
 
 DELIMITER ;
+
+/* 
++------------+----------------+---------------+---------------+
+| employeeId | employeeName   | yearOfService | pensionAmount |
++------------+----------------+---------------+---------------+
+|          1 | Alice Johnson  |             9 |       4500.00 |
+|          2 | Bob Smith      |             5 |       3000.00 |
+|          3 | Carol Williams |             6 |       3300.00 |
+|          4 | David Brown    |             7 |       5040.00 |
+|          5 | Eva Davis      |             7 |       3360.00 |
+|          7 | Grace Wilson   |             5 |       2950.00 |
+|          8 | Henry Moore    |             5 |       3550.00 |
+|         10 | Jack Anderson  |            10 |       6700.00 |
+|         11 | Karen Thomas   |             5 |       2900.00 |
+|         12 | Larry Jackson  |             6 |       3360.00 |
+|         14 | Nathan Harris  |             9 |       6210.00 |
+|         15 | Olivia Martin  |             6 |       3240.00 |
+|         17 | Quinn Garcia   |             7 |       4900.00 |
+|         19 | Steve Robinson |             5 |       3300.00 |
+|         20 | Tina Clark     |             8 |       5040.00 |
++------------+----------------+---------------+---------------+
+
+*/
 
