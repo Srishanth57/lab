@@ -8,13 +8,13 @@ BEGIN
     DECLARE i INT DEFAULT 0;
     DECLARE is_palindrome INT DEFAULT 1;
 
-    SET len = LENGTH(str);
+    SET len = LENGTH(CAST(str AS char));
 
-    WHILE i < len DIV 2 DO
+     main_loop: WHILE i < len DIV 2 DO
         -- Compare characters from both ends
         IF SUBSTRING(str, i+1, 1) != SUBSTRING(str, len - i , 1) THEN
             SET is_palindrome = 0;
-            LEAVE;
+            LEAVE main_loop ;
         END IF;
         SET i = i + 1;
     END WHILE;
@@ -27,4 +27,19 @@ BEGIN
 END $$
 
 DELIMITER ;
+/* 
 
+
++----------------------------+
+| result                     |
++----------------------------+
+| malayalam is a palindrome. |
++----------------------------+
+
++----------------------------+
+| result                     |
++----------------------------+
+| happy is not a palindrome. |
++----------------------------+
+
+*/
