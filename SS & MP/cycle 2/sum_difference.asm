@@ -1,3 +1,5 @@
+global _start
+
 section .data
     prompt1     db 'Enter first number: ', 0
     plen1       equ $-prompt1
@@ -18,7 +20,8 @@ section .bss
     n2int       resd 1
 
 section .text
-    global _start
+
+
 _start:
     ; Prompt and read first number
     mov eax,4
@@ -26,6 +29,7 @@ _start:
     mov ecx,prompt1
     mov edx,plen1
     int 0x80
+
     mov eax,3
     mov ebx,0
     mov ecx,num1
@@ -39,6 +43,7 @@ _start:
     mov ecx,prompt2
     mov edx,plen2
     int 0x80
+
     mov eax,3
     mov ebx,0
     mov ecx,num2
@@ -46,46 +51,33 @@ _start:
     int 0x80
     mov [num2+eax-1],byte 0
 
-    ; Convert first number to int
+    ; Convert first number
     mov esi,num1
     call stoi
     mov [n1int],eax
 
-    ; Convert second number to int
+    ; Convert second number
     mov esi,num2
     call stoi
     mov [n2int],eax
 
-    ; Sum calculation and print label
+    ; SUM
     mov eax,[n1int]
     add eax,[n2int]
     push eax
+
     mov eax,4
     mov ebx,1
     mov ecx,out_sum
-    mov edx,osumlen-1
+    mov edx,osumlen
     int 0x80
+
     pop eax
     mov edi,sumstr
     call itoa
+
     mov esi,sumstr
-    push esi
-    mov ecx,0
-
-.get_len:
-    cmp byte [esi+ ecx ],0
-    je .print_sum
-    inc ecx 
-    jmp  .get_len
-
-.print_sum:
-    mov edx , ecx 
-    mov eax,4
-    mov ebx,1
-    mov ecx,sumstr
-    
-    int 0x80
-    pop esi
+    call print_str
 
     ; Print newline
     mov eax,4
@@ -94,36 +86,23 @@ _start:
     mov edx,1
     int 0x80
 
-    ; Difference calculation and print label
+    ; DIFFERENCE
     mov eax,[n1int]
     sub eax,[n2int]
     push eax
+
     mov eax,4
     mov ebx,1
     mov ecx,out_diff
     mov edx,odifflen
     int 0x80
+
     pop eax
     mov edi,diffstr
     call itoa
+
     mov esi,diffstr
-    push esi
-    mov ecx,0
-
-.get_len2:
-    cmp byte [esi+ ecx ],0
-    je .print_diff
-    inc ecx
-   
-    jmp .get_len2
-
-.print_diff:
-    mov edx , ecx 
-    mov eax,4
-    mov ebx,1
-    mov ecx,diffstr
-    int 0x80
-    pop esi
+    call print_str
 
     ; Print newline
     mov eax,4
@@ -132,42 +111,32 @@ _start:
     mov edx,1
     int 0x80
 
-    ; Exit program
+    ; Exit
     mov eax,1
     xor ebx,ebx
     int 0x80
 
-; stoi implementation
+;---------------------------------------
+; stoi: convert string number in ESI → EAX
+;---------------------------------------
 stoi:
-    push ebx
-    push eax
-    push ecx
-    push edx
-    push esi
-
     xor eax,eax
     xor ebx,ebx
-
 .next_char:
     mov bl,[esi]
     cmp bl,0
     je .done
     sub bl,'0'
-    movzx ecx,bl
-    mov edx,10
-    imul eax,eax,edx
-    add eax,ecx
+    imul eax,10
+    add eax,ebx
     inc esi
     jmp .next_char
 .done:
-    pop esi
-    pop edx
-    pop ecx
-    pop eax
-    pop ebx
     ret
 
-; itoa implementation
+;---------------------------------------
+; itoa: convert integer in EAX → string in EDI
+;---------------------------------------
 itoa:
     push eax
     push ebx
@@ -175,40 +144,65 @@ itoa:
     push edx
     push edi
 
-    mov ecx,0
-
+    mov ecx,0           ; digit count
+    mov ebx,10
     cmp eax,0
-    jne .check1
-
+    jne .convert
     mov byte [edi],'0'
     inc edi
     mov byte [edi],0
-    jmp .itoa_done
+    jmp .done
 
-.check1:
-    cmp eax,0
-    je .reverse_ascii
-    mov ebx,10
+.convert:
     xor edx,edx
-
     div ebx
     push edx
     inc ecx
-    jmp .check1
+    test eax,eax
+    jnz .convert
 
-.reverse_ascii:
+.write_digits:
     cmp ecx,0
-    je .itoa_done
+    je .finish
     pop edx
     add dl,'0'
     mov [edi],dl
     inc edi
     dec ecx
-    jmp .reverse_ascii
+    jmp .write_digits
 
-.itoa_done:
+.finish:
     mov byte [edi],0
+
+.done:
     pop edi
+    pop edx
+    pop ecx
+    pop ebx
+    pop eax
+    ret
+
+;---------------------------------------
+; print_str: print null-terminated string at ESI
+;---------------------------------------
+print_str:
+    push eax
+    push ebx
+    push ecx
+    push edx
+
+    mov ecx,esi
+    xor edx,edx
+.count:
+    cmp byte [ecx+edx],0
+    je .print
+    inc edx
+    jmp .count
+.print:
+    mov eax,4
+    mov ebx,1
+    int 0x80
+
     pop edx
     pop ecx
     pop ebx
