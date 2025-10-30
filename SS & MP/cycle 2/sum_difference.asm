@@ -75,10 +75,13 @@ _start:
     pop eax
     mov edi,sumstr
     call itoa
-
-    mov esi,sumstr
-    call print_str
-
+  
+	; Print the sum 
+	mov eax , 4 
+	mov ebx  , 1 
+	mov ecx , edi 
+	mov edx  , 4
+	int 0x80
     ; Print newline
     mov eax,4
     mov ebx,1
@@ -100,10 +103,13 @@ _start:
     pop eax
     mov edi,diffstr
     call itoa
-
-    mov esi,diffstr
-    call print_str
-
+   ;Print the difference 
+   mov eax , 4 
+	mov ebx  , 1 
+	mov ecx , edi 
+	mov edx  , 4
+	int 0x80
+   	
     ; Print newline
     mov eax,4
     mov ebx,1
@@ -138,74 +144,34 @@ stoi:
 ; itoa: convert integer in EAX → string in EDI
 ;---------------------------------------
 itoa:
-    push eax
-    push ebx
-    push ecx
-    push edx
-    push edi
+    
+    push edi 
+    
+    mov ecx, 0       ; digit count
+    mov ebx, 10
 
-    mov ecx,0           ; digit count
-    mov ebx,10
-    cmp eax,0
-    jne .convert
-    mov byte [edi],'0'
-    inc edi
-    mov byte [edi],0
-    jmp .done
-
-.convert:
-    xor edx,edx
+.convert_loop:
+    xor edx, edx
     div ebx
     push edx
     inc ecx
-    test eax,eax
-    jnz .convert
+    test eax, eax
+    jnz .convert_loop
 
 .write_digits:
-    cmp ecx,0
-    je .finish
+    cmp ecx, 0
+    je .done
     pop edx
-    add dl,'0'
-    mov [edi],dl
+    add dl, '0'
+    mov [edi], dl
     inc edi
     dec ecx
     jmp .write_digits
 
-.finish:
-    mov byte [edi],0
-
 .done:
-    pop edi
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
+    mov byte [edi], 0
+    pop edi 
+  
     ret
 
-;---------------------------------------
-; print_str: print null-terminated string at ESI
-;---------------------------------------
-print_str:
-    push eax
-    push ebx
-    push ecx
-    push edx
-
-    mov ecx,esi
-    xor edx,edx
-.count:
-    cmp byte [ecx+edx],0
-    je .print
-    inc edx
-    jmp .count
-.print:
-    mov eax,4
-    mov ebx,1
-    int 0x80
-
-    pop edx
-    pop ecx
-    pop ebx
-    pop eax
-    ret
 
