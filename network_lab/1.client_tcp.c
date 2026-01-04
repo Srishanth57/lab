@@ -50,3 +50,19 @@ int main() {
 
   return 0; 
 }
+
+
+
+/*
+Output 
+
+
+
+Server connection success
+Message sent
+Message from server: Hello from the server!
+
+
+
+
+*/
