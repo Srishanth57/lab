@@ -1,5 +1,9 @@
-Exp1 tcp echo server
+Exp1 TCP ECHO 
 
-https://dev.to/sanjayrv/a-beginners-guide-to-socket-programming-in-c-5an5
+    https://dev.to/sanjayrv/a-beginners-guide-to-socket-programming-in-c-5an5
+    https://www.cs.dartmouth.edu/~campbell/cs50/socketprogramming.html
+    https://idiotdeveloper.com/tcp-client-server-implementation-in-c/
 
-
+Exp2 UDP ECHO 
+    https://idiotdeveloper.com/udp-client-server-implementation-in-c/#google_vignette
+    https://www.scaler.com/topics/udp-server-client-implementation-in-c/
