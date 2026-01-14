@@ -31,13 +31,21 @@ int main() {
 	
 	printf("Server connection successfull\n");
 	char msg_buffer[1024];
+
 	printf("Enter msg: ");
 	fgets(msg_buffer , sizeof(msg_buffer), stdin);
-	if((send(sockfd , msg_buffer , sizeof(msg_buffer) , 0)) < 0) {
+	if((send(sockfd , msg_buffer , strlen(msg_buffer) , 0)) < 0) {
 		perror("Error while sending message\n");
 		exit(1);
 	}
-	printf("Msg sent successfull\n");
+	
+	memset(&msg_buffer, 0 , sizeof(msg_buffer)); 
+	if((recv(sockfd , msg_buffer , sizeof(msg_buffer) , 0)) < 0) {
+		perror("Error while receiving message\n");
+		exit(1);
+	}
+	
+	printf("Reversed string:%s\n", msg_buffer);
 	close(sockfd);
 	return 0 ;
 }
@@ -48,8 +56,9 @@ int main() {
 Output 
 
 Server connection successfull
-Enter msg: Hello
-Msg sent successfull
+Enter msg: hola
+Reversed string:
+aloh
 
 
 

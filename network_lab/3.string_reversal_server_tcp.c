@@ -5,7 +5,25 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+void revString(char *str) {
+    int i = 0, j = 0;
+    char temp;
 
+    // Find length of string
+    while (str[j] != '\0') {
+        j++;
+    }
+    j--; // last character index
+
+    // Swap characters from both ends
+    while (i < j) {
+        temp = str[i];
+        str[i] = str[j];
+        str[j] = temp;
+        i++;
+        j--;
+    }
+}
 
 int main() {
 
@@ -41,15 +59,22 @@ int main() {
 	} 
 	
 	printf("Client connection successfull\n");
-	char buffer[1024] = {0}; 
+	char buffer[1024] = {'\0'}; 
 	if((recv(clientfd , buffer , sizeof(buffer), 0)) < 0) {
 		perror("Error receiving content from client");
 		exit(1);
 		
 		
 	}
+	printf("Received string: %s\n", buffer);
+	revString(buffer);
+
+	if((send(clientfd , buffer , strlen(buffer) , 0)) < 0) {
+		perror("Error while sending message\n");
+		exit(1);
+	}
 	
-	printf("Msg received: %s\n", buffer);
+	
 	close(sockfd);
 	close(clientfd);
 	return 0;
@@ -60,7 +85,9 @@ int main() {
 Output 
 
 Client connection successfull
-Msg received: Hello
+Received string: hola
+
+
 
 
 
