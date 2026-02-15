@@ -34,10 +34,13 @@ int main() {
 	    
 	  }
 	char buffer[1024] , command[10] , filename[10]; 
+	// Read filename from user
 	  printf("Enter command (GET/ PUT filename): ");
-	  fgets(buffer ,strlen(buffer) , stdin);
-	  send(sockfd , buffer, strlen(buffer) , 0); 
-	  sscanf(buffer , "%s%s", command , filename);  
+	  fgets(buffer ,sizeof(buffer) , stdin);
+	  
+	  send(sockfd , buffer, sizeof(buffer) , 0); 
+	 
+	  sscanf(buffer , "%s %s", command , filename);  
 	  
 	  if(strcmp(command , "GET" ) == 0 )  {
 	  
@@ -64,6 +67,9 @@ int main() {
 	  		printf("file uploaded successfully\n"); 
 	  	
 	  	}
+	  } else {
+	    perror("Provide proper commands such as 'GET' or 'POST'\n");
+	    exit(1);
 	  }
 	  
 	  close(sockfd);

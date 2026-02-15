@@ -10,9 +10,7 @@ void revString(char *str) {
     char temp;
 
     // Find length of string
-    while (str[j] != '\0') {
-        j++;
-    }
+    j = strlen(str); 
     j--; // last character index
 
     // Swap characters from both ends

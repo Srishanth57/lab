@@ -53,15 +53,25 @@ int main() {
   char command[5] , filename[50] , content[1024];
   sscanf(buffer , "%s %s", command , filename );  
   if (strcmp(command  , "GET" ) == 0) {
-    FILE* fptr = fopen("new.txt" , 'r'); 
-    while(fgets(content , sizeof(content) , fptr)) {
-      send(clientfd , content , sizeof(content) , 0 );
+    FILE* fptr = fopen(filename , "r"); 
+    while(fgets( content , sizeof(content) , fptr)) {
+      send(clientfd, content , strlen(content) , 0 );
     
     }
     fclose(fptr); 
     printf("Successfully send data to client"); 
   }
-  
+  else if (strcmp(command , "PUT" ) == 0 ) {
+    FILE *fp = fopen(filename , "w"); 
+  	while((recv(clientfd , content , sizeof(content) , 0 )) > 0) {
+                
+  		fputs(content, fp); 
+  		
+  	}
+  	
+  	fclose(fp); 
+        printf("File successfully uploaded to server!\n"); 
+  } 
   
 
   return 0 ; 
