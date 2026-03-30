@@ -1,68 +1,3 @@
-/*#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-
-
-int main() {
-    int sockfd;
-    struct sockaddr_in server_addr;
-
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(5001);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-
-    connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-    printf("Connected to server!\n\n");
-
-    int seq = 0;
-    int total ; 
-    printf("Enter the total no of frames to be sent: "); 
-    scanf("%d" , &total) ; 
-
-    for (int i = 0; i < total; i++) {
-        char frame[50], ack[20];
-        int is_last = (i == total - 1) ? 1 : 0;
-
-            // Send frame as "seq:is_last"
-            sprintf(frame, "%d:%d", seq, is_last);
-            printf("Sending Frame %d (seq=%d)... ", i, seq);
-            send(sockfd, frame, strlen(frame) + 1, 0);
-
-            // Wait for ACK
-            recv(sockfd, ack, sizeof(ack), 0);
-            printf("Got: %s\n", ack);
-
-        
-            seq = 1 - seq;   // toggle and move on
-                
-    }
-
-    printf("\nAll %d frames sent successfully!\n", total);
-    close(sockfd);
-    return 0;
-}
-*/
-/*
-Output:
-Connected to server!
-
-Sending Frame 0 (seq=0)... Got: ACK:0
-Sending Frame 1 (seq=1)... Got: ACK:1
-Sending Frame 2 (seq=0)... Got: ACK:0
-Sending Frame 3 (seq=1)... Got: ACK:1
-Sending Frame 4 (seq=0)... Got: ACK:0
-
-All 5 frames sent successfully!
-*/
-
-
-
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -74,65 +9,66 @@ int main() {
     int sockfd;
     struct sockaddr_in server_addr;
 
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
+    sockfd = socket(AF_INET, SOCK_STREAM, 0);
 
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(5001);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(5001);
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    // Timeout setup
-    struct timeval tv;
-    tv.tv_sec = 2;
-    tv.tv_usec = 0;
-    setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    connect(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+    printf("Connected to server!\n\n");
 
+    int seq = 0;
     int total;
-    printf("Enter total number of frames: ");
+
+    printf("Enter the total no of frames to be sent: ");
     scanf("%d", &total);
 
-    printf("\n[Client] Sending %d frames...\n\n", total);
+    int error_frame = total / 2; // simulate error at middle frame
 
-    int next = 0;
+    for (int i = 0; i < total; i++) {
+        char frame[50], ack[20];
 
-    while (next < total) {
-        char frame[20], ack[20];
+        int is_last = (i == total - 1) ? 1 : 0;
+        int send_seq = (i == error_frame) ? (1 - seq) : seq; // flip seq for error
 
-        sprintf(frame, "%d", next);
+        sprintf(frame, "%d:%d", send_seq, is_last);
 
-        printf("[Client] Sending Frame %d...\n", next);
-        sendto(sockfd, frame, strlen(frame), 0,
-               (struct sockaddr *)&server_addr, sizeof(server_addr));
+        printf("Sending Frame %d (seq=%d)... ", i, send_seq);
 
-        socklen_t len = sizeof(server_addr);
+        send(sockfd, frame, strlen(frame) + 1, 0);
 
-        int r = recvfrom(sockfd, ack, sizeof(ack), 0,
-                         (struct sockaddr *)&server_addr, &len);
+        recv(sockfd, ack, sizeof(ack), 0);
+        printf("Got: %s\n", ack);
 
-        if (r < 0) {
-            printf("[Client] TIMEOUT -> Resending Frame %d\n\n", next);
-            continue;
+        if (strncmp(ack, "NAK", 3) == 0) {
+            printf("[NAK received for frame %d]\n", i);
         }
 
-        ack[r] = '\0';
-        int a = atoi(ack);
-
-        printf("[Client] Received ACK: %d\n", a);
-
-        if (a == -1) {
-            printf("[Client] NAK -> Resending Frame %d\n\n", next);
-            continue;
-        }
-
-        if (a == next + 1) {
-            printf("[Client] Frame %d Acknowledged\n\n", next);
-            next++;
-        } else {
-            printf("[Client] Wrong ACK -> Resend\n\n");
-        }
+        seq = 1 - seq; // toggle sequence
     }
 
-    printf("[Client] All frames sent successfully!\n");
-
+    printf("\nAll %d frames sent!\n", total);
     close(sockfd);
     return 0;
 }
+
+/* Output 
+Connected to server!
+
+Enter the total no of frames to be sent: 10
+Sending Frame 0 (seq=0)... Got: ACK:1
+Sending Frame 1 (seq=1)... Got: ACK:2
+Sending Frame 2 (seq=0)... Got: ACK:3
+Sending Frame 3 (seq=1)... Got: ACK:4
+Sending Frame 4 (seq=0)... Got: ACK:5
+Sending Frame 5 (seq=0)... Got: NAK
+[NAK received for frame 5]
+Sending Frame 6 (seq=0)... Got: NAK
+[NAK received for frame 6]
+Sending Frame 7 (seq=1)... Got: ACK:6
+Sending Frame 8 (seq=0)... Got: ACK:7
+Sending Frame 9 (seq=1)... Got: ACK:8
+
+All 10 frames sent!
+*/

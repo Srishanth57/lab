@@ -1,4 +1,4 @@
-/*#include <stdio.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,36 +11,42 @@ int main() {
     socklen_t len = sizeof(client_addr);
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(5001);
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(5001);
     server_addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
     bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
     listen(sockfd, 1);
 
     printf("Server waiting...\n");
+
     clientfd = accept(sockfd, (struct sockaddr *)&client_addr, &len);
     printf("Client connected!\n\n");
 
     int expected = 0;
-    int i = 0 ;
+    int frame_count = 0;
+    int i = 0;
+
     while (1) {
         char frame[50];
         int seq, is_last;
 
-        // Receive frame
         recv(clientfd, frame, sizeof(frame), 0);
         sscanf(frame, "%d:%d", &seq, &is_last);
+
         printf("Received: Frame %d ", i++);
-      
+
         char ack[10];
+
         if (seq == expected) {
-            printf("-> Accepted. Sending ACK %d\n", seq);
-            sprintf(ack, "ACK:%d", seq);
-            expected = 1 - expected;   // toggle 0/1
+            frame_count++;
+            sprintf(ack, "ACK:%d", frame_count);
+            printf("-> Accepted\n");
+            expected = 1 - expected; // toggle expected seq
         } else {
-            printf("-> Wrong order! Sending NAK\n");
-            sprintf(ack, "NAK:%d", expected);
+            sprintf(ack, "NAK"); // wrong sequence
+            printf("-> Wrong order\n");
         }
 
         send(clientfd, ack, strlen(ack) + 1, 0);
@@ -55,127 +61,26 @@ int main() {
     close(sockfd);
     return 0;
 }
+
+
+/* Output 
+Connected to server!
+
+Enter the total no of frames to be sent: 10
+Sending Frame 0 (seq=0)... Got: ACK:1
+Sending Frame 1 (seq=1)... Got: ACK:2
+Sending Frame 2 (seq=0)... Got: ACK:3
+Sending Frame 3 (seq=1)... Got: ACK:4
+Sending Frame 4 (seq=0)... Got: ACK:5
+Sending Frame 5 (seq=0)... Got: NAK
+[NAK received for frame 5]
+Sending Frame 6 (seq=0)... Got: NAK
+[NAK received for frame 6]
+Sending Frame 7 (seq=1)... Got: ACK:6
+Sending Frame 8 (seq=0)... Got: ACK:7
+Sending Frame 9 (seq=1)... Got: ACK:8
+
+All 10 frames sent!
+
+
 */
-/*
-Output:
-Server waiting...
-Client connected!
-
-Received: Frame 0 -> Accepted. Sending ACK 0
-Received: Frame 1 -> Accepted. Sending ACK 1
-Received: Frame 0 -> Accepted. Sending ACK 0
-Received: Frame 1 -> Accepted. Sending ACK 1
-Received: Frame 0 -> Accepted. Sending ACK 0
-
-All frames received!
-*/
-
-
-
-
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-
-int check(int a[], int n, int x) {
-    for (int i = 0; i < n; i++)
-        if (a[i] == x) return 1;
-    return 0;
-}
-
-void del(int a[], int *n, int x) {
-    for (int i = 0; i < *n; i++) {
-        if (a[i] == x) {
-            for (int j = i; j < *n - 1; j++)
-                a[j] = a[j + 1];
-            (*n)--;
-            return;
-        }
-    }
-}
-
-int main() {
-    int sockfd;
-    struct sockaddr_in server_addr, client_addr;
-
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-
-    server_addr.sin_family      = AF_INET;
-    server_addr.sin_port        = htons(5001);
-    server_addr.sin_addr.s_addr = INADDR_ANY;
-
-    bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
-
-    printf("Server waiting...\n\n");
-
-    int total;
-    printf("Enter total number of frames expected: ");
-    scanf("%d", &total);
-
-    int lost[50], l = 0;
-    int timeout[50], t = 0;
-
-    int nl, nt;
-
-    printf("Enter number of lost frames: ");
-    scanf("%d", &nl);
-
-    if (nl > 0) {
-        printf("Enter lost frame numbers: ");
-        for (int i = 0; i < nl; i++)
-            scanf("%d", &lost[l++]);
-    }
-
-    printf("Enter number of timeout frames: ");
-    scanf("%d", &nt);
-
-    if (nt > 0) {
-        printf("Enter timeout frame numbers: ");
-        for (int i = 0; i < nt; i++)
-            scanf("%d", &timeout[t++]);
-    }
-
-    int next = 0;
-
-    while (next < total) {
-        char frame[20], ack[20];
-        socklen_t len = sizeof(client_addr);
-
-        recvfrom(sockfd, frame, sizeof(frame), 0,
-                 (struct sockaddr *)&client_addr, &len);
-
-        int f = atoi(frame);
-
-        printf("[Server] Received Frame %d\n", f);
-
-        if (check(lost, l, f)) {
-            sprintf(ack, "%d", -1);
-            sendto(sockfd, ack, strlen(ack), 0,
-                   (struct sockaddr *)&client_addr, len);
-
-            printf("[Server] Frame %d LOST -> NAK Sent\n\n", f);
-            del(lost, &l, f);
-        }
-        else if (check(timeout, t, f)) {
-            printf("[Server] Frame %d TIMEOUT -> No ACK\n\n", f);
-            del(timeout, &t, f);
-        }
-        else {
-            next = f + 1;
-            sprintf(ack, "%d", next);
-
-            sendto(sockfd, ack, strlen(ack), 0,
-                   (struct sockaddr *)&client_addr, len);
-
-            printf("[Server] Frame %d OK -> ACK Sent\n\n", f);
-        }
-    }
-
-    printf("[Server] All frames received!\n");
-
-    close(sockfd);
-    return 0;
-}
