@@ -1,61 +1,68 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <unistd.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include <arpa/inet.h>
 
 int main() {
-    int sockfd, clientfd;
-    struct sockaddr_in addr;
-    socklen_t len = sizeof(addr);
 
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    addr.sin_family      = AF_INET;
-    addr.sin_port        = htons(5002);
-    addr.sin_addr.s_addr = htonl(INADDR_ANY);
+    int sockfd;
+    struct sockaddr_in server_addr, client_addr;
+    socklen_t len = sizeof(client_addr);
 
-    bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
-    listen(sockfd, 1);
-    printf("Waiting for client...\n");
+    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
 
-    clientfd = accept(sockfd, (struct sockaddr *)&addr, &len);
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(5001);
+    server_addr.sin_addr.s_addr = INADDR_ANY;
+
+    bind(sockfd, (struct sockaddr *)&server_addr, sizeof(server_addr));
+
+    printf("Server waiting...\n");
 
     int expected = 0;
+    int received = 0;
+    int total = -1;
 
     while (1) {
-        int seq, last;
-        recv(clientfd, &seq,  sizeof(int), 0);
-        recv(clientfd, &last, sizeof(int), 0);
+
+        char frame[50] = {0};
+        int seq, is_last, frame_total;
+
+        recvfrom(sockfd, frame, sizeof(frame), 0,
+                 (struct sockaddr *)&client_addr, &len);
+
+        sscanf(frame, "%d:%d:%d", &seq, &is_last, &frame_total);
+
+        if (total == -1) total = frame_total;
+
+        printf("Received: Frame %d ", seq);
+
+        char ack[20];
 
         if (seq == expected) {
-            printf("Received frame %d -> ACK\n", seq);
-            send(clientfd, "ACK", 4, 0);
+
+            received++;
             expected++;
+
+            printf("-> Accepted. Sending ACK %d\n", expected);
+            sprintf(ack, "ACK:%d", expected);
+
         } else {
-            printf("Received frame %d (expected %d) -> NAK\n", seq, expected);
-            send(clientfd, "NAK", 4, 0);
+
+            printf("-> Wrong order! Sending NAK\n");
+            sprintf(ack, "NAK:%d", expected);
         }
 
-        if (last && seq == expected - 1) break;
+        sendto(sockfd, ack, strlen(ack) + 1, 0,
+               (struct sockaddr *)&client_addr, len);
+
+        if (received == total) {
+            printf("\nAll %d frames received!\n", total);
+            break;
+        }
     }
 
-    printf("All frames received.\n");
-    close(clientfd);
     close(sockfd);
     return 0;
 }
-
-/*
-Output:
-Waiting for client...
-Received frame 0 -> ACK
-Received frame 1 -> ACK
-Received frame 2 (expected 2) -> NAK
-Received frame 2 -> ACK
-Received frame 3 -> ACK
-Received frame 4 -> ACK
-Received frame 5 -> ACK
-Received frame 6 -> ACK
-Received frame 7 -> ACK
-All frames received.
-*/
