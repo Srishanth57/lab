@@ -5,7 +5,7 @@
 
 #define ROW 128
 #define COL 40
-
+#define KEYWORD_ENTRIES 23
 static void display_lexemes(int sl_number, int ch, char lexeme[], int line_number, FILE *out)
 {
 	fprintf(out, "%-8d%-16c%-20s%-6d\n", sl_number, (char)ch, lexeme, line_number);
@@ -16,6 +16,23 @@ static void display_lexemes_string(int sl_number, char ch[], char lexeme[], int 
 	fprintf(out, "%-8d%-16s%-20s%-6d\n", sl_number, ch, lexeme, line_number);
 }
 
+static bool is_keyword(const char *word)
+{
+	char keywords[KEYWORD_ENTRIES][COL] = {
+		"void", "int", "main", "include", "stdio", "FILE",
+		"argc", "argv", "printf", "fgetc", "fopen",
+		"while", "do", "else", "if", "char",
+		"size_t", "ungetc", "fprintf", "for", "ctype", "stdbool", "define"};
+
+	for (int i = 0; i < KEYWORD_ENTRIES; i++)
+	{
+		if (strcmp(keywords[i], word) == 0)
+		{
+			return true;
+		}
+	}
+	return false;
+}
 int main(int argc, char *argv[])
 {
 
@@ -24,12 +41,6 @@ int main(int argc, char *argv[])
 		printf("Input parameter mismatch\n");
 		return 1;
 	}
-
-	char keywords[23][50] = {
-		"void", "int", "main", "include", "stdio", "FILE",
-		"argc", "argv", "printf", "fgetc", "fopen",
-		"while", "do", "else", "if", "char",
-		"size_t", "ungetc", "fprintf", "for", "ctype", "stdbool", "define"};
 
 	// Open files
 	FILE *in = fopen(argv[1], "r");
@@ -113,10 +124,8 @@ int main(int argc, char *argv[])
 			if (ch != EOF)
 				ungetc(ch, in);
 
-			if (flag)
-				display_lexemes_string(sl_number, lexemes, "Float", line_number, out);
-			else
-				display_lexemes_string(sl_number, lexemes, "Number", line_number, out);
+			display_lexemes_string(sl_number, lexemes,
+								   flag ? "Float" : "Number", line_number, out);
 		}
 		else if (isalpha(ch))
 		{
@@ -124,21 +133,13 @@ int main(int argc, char *argv[])
 			while (isalpha(ch = fgetc(in)))
 				lexemes[i++] = ch;
 			lexemes[i] = '\0';
-			for (int i = 0; i < 20; i++)
-			{
-				if (strcmp(keywords[i], lexemes) == 0)
-				{
-					flag = true;
-					break;
-				}
-			}
 
 			if (ch != EOF)
 				ungetc(ch, in);
-			if (flag)
-				display_lexemes_string(sl_number, lexemes, "Keyword", line_number, out);
-			else
-				display_lexemes_string(sl_number, lexemes, "Identifier", line_number, out);
+
+			bool keyword = is_keyword(lexemes);
+			display_lexemes_string(sl_number, lexemes,
+								   keyword ? "Keyword" : "Identifier", line_number, out);
 		}
 		else
 		{
