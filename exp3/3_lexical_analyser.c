@@ -6,6 +6,7 @@
 #define ROW 128
 #define COL 40
 #define KEYWORD_ENTRIES 23
+
 static void display_lexemes(int sl_number, int ch, char lexeme[], int line_number, FILE *out)
 {
 	fprintf(out, "%-8d%-16c%-20s%-6d\n", sl_number, (char)ch, lexeme, line_number);
@@ -18,7 +19,7 @@ static void display_lexemes_string(int sl_number, char ch[], char lexeme[], int 
 
 static bool is_keyword(const char *word)
 {
-	char keywords[KEYWORD_ENTRIES][COL] = {
+	const char keywords[KEYWORD_ENTRIES][COL] = {
 		"void", "int", "main", "include", "stdio", "FILE",
 		"argc", "argv", "printf", "fgetc", "fopen",
 		"while", "do", "else", "if", "char",
@@ -33,6 +34,7 @@ static bool is_keyword(const char *word)
 	}
 	return false;
 }
+
 int main(int argc, char *argv[])
 {
 
