@@ -1,0 +1,1 @@
+intmain(){intx=10;floaty=20.5;if(x>=y){returnx;}while(x!=0){x=x-1;}}
