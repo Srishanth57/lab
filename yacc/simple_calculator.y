@@ -2,9 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
-
-int yylex(void);
-int yyerror(char *);
+int yylex(void); int yyerror(char *);
 %}
 
 %token NUM
@@ -12,32 +10,27 @@ int yyerror(char *);
 %left '*' '/'
 
 %%
-
-S : E '\n'      { printf("Result: %d\n", $1); exit(0); };
-E : E '+' E     { $$ = $1 + $3; }
-  | E '-' E     { $$ = $1 - $3; }
-  | E '*' E     { $$ = $1 * $3; }
-  | E '/' E     { $$ = $1 / $3; }
+S : E '\n'  { printf("Result: %d\n", $1); exit(0); };
+E : E '+' E { $$ = $1 + $3; }
+  | E '-' E { $$ = $1 - $3; }
+  | E '*' E { $$ = $1 * $3; }
+  | E '/' E { $$ = $1 / $3; }
   | NUM
   ;
-
 %%
 
-int main(void)
-{
+int main(void) {
     printf("Enter an expression: ");
-    return yyparse();
+    yyparse();
+    return 0;
 }
 
-int yylex(void)
-{
-    int c = getchar();
-    if (isdigit(c))
-        return ungetc(c, stdin), scanf("%d", &yylval), NUM;
-    return c == EOF ? 0 : c;
+int yylex(void) {
+    int ch = getchar();
+    if (!isdigit(ch)) return ch;
+    ungetc(ch, stdin);
+    scanf("%d", &yylval);
+    return NUM;
 }
 
-int yyerror(char *s)
-{
-    return printf("Invalid expression\n"), 0;
-}
+int yyerror(char *s) { printf("Invalid expression\n"); return 0; }
