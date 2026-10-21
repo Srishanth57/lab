@@ -1,68 +1,69 @@
 /*
    Grammar:
-   E -> E+E
-   E -> E*E
-   E -> (E)
-   E -> i
+   E -> E+E | E*E | (E) | i
 */
 
 #include <stdio.h>
-#include <string.h>
+#include<string.h>
 
 char stack[50], input[50];
 int top = -1, ip = 0;
 
-void printStep(char action[])
+void show(char *action)
 {
-	printf("%-15.*s %-15s %-15s\n", top + 1, stack, input + ip, action);
+	printf("%-15.*s %-15s %s\n", top + 1, stack, input + ip, action);
 }
 
 int reduce()
 {
-	if (top >= 0 && stack[top] == 'i') /* E -> i */
+	if (top < 0) return 0;
+
+	if (stack[top] == 'i')                          // E -> i
 	{
 		stack[top] = 'E';
 		return 1;
 	}
-	if (top >= 2 && (!memcmp(stack + top - 2, "E+E", 3) ||   /* E -> E+E */
-					 !memcmp(stack + top - 2, "E*E", 3) ||   /* E -> E*E */
-					 !memcmp(stack + top - 2, "(E)", 3)))    /* E -> (E) */
+
+	if (top >= 2)
 	{
-		stack[top -= 2] = 'E';
-		return 1;
+		char x = stack[top - 2], y = stack[top - 1], z = stack[top];
+
+		if ((x == 'E' && (y == '+' || y == '*') && z == 'E') ||   // E -> E+E, E*E
+		    (x == '(' && y == 'E' && z == ')'))                   // E -> (E)
+		{
+			top -= 2;
+			stack[top] = 'E';
+			return 1;
+		}
 	}
 	return 0;
 }
 
 int main()
 {
-	printf("Enter input string (end with $): ");
-	scanf("%49s", input);
-	printf("\n%-15s %-15s %-15s\n---------------------------------------------\n", "Stack", "Input", "Action");
+	printf("Enter input string: ");
+	scanf("%s", input);
+	strcat(input, "$"); 
+	printf("\n%-15s %-15s %s\n-----------------------------------------\n", "Stack", "Input", "Action");
 
 	while (1)
 	{
 		if (input[ip] == '$' && top == 0 && stack[0] == 'E')
 		{
-			printStep("Accept");
+			show("Accept");
 			break;
 		}
 
 		if (reduce())
-			printStep("Reduce");
-		else if (input[ip] && input[ip] != '$')
+			show("Reduce");
+		else if (input[ip] != '$' && input[ip] != '\0')
 		{
-			if (top >= 48)
-			{
-				printf("Error: Stack overflow\n");
-				break;
-			}
 			stack[++top] = input[ip++];
-			printStep("Shift");
+			show("Shift");
 		}
 		else
 		{
-			printStep("Error");
+			show("Error");
 			break;
 		}
 	}
